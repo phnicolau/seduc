@@ -62,7 +62,7 @@
     let dados = [];
 
     async function carregarDados() {
-      const response = await fetch('dados_he.json');
+      const response = await fetch('dados_he_corrigido.json');
       dados = await response.json();
       preencherFiltros();
       filtrarTabela();
