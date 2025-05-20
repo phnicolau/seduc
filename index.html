@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Horas Extras - SME Maricá</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { padding: 2rem; }
+    .form-control, .form-select { margin-bottom: 1rem; }
+    table { font-size: 0.9rem; }
+    th, td { vertical-align: middle; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2 class="mb-4">Painel de Horas Extras - SME Maricá</h2>
+
+    <input type="text" id="busca" class="form-control" placeholder="Buscar por nome ou matrícula...">
+
+    <div class="row">
+      <div class="col-md-4">
+        <select id="filtroLotacao" class="form-select">
+          <option value="">Todas as Unidades</option>
+        </select>
+      </div>
+      <div class="col-md-4">
+        <select id="filtroTipo" class="form-select">
+          <option value="">Todos os Tipos de HE</option>
+        </select>
+      </div>
+      <div class="col-md-4">
+        <select id="filtroStatus" class="form-select">
+          <option value="">Todos os Status</option>
+          <option value="ATIVA">ATIVA</option>
+          <option value="FINALIZADA">FINALIZADA</option>
+        </select>
+      </div>
+    </div>
+
+    <table class="table table-bordered table-striped mt-3">
+      <thead class="table-dark">
+        <tr>
+          <th>Matrícula</th>
+          <th>Nome</th>
+          <th>Cargo</th>
+          <th>Função</th>
+          <th>Lotacão</th>
+          <th>Horas/Tempos</th>
+          <th>Tipo</th>
+          <th>Início</th>
+          <th>Término</th>
+          <th>Status</th>
+          <th>Observação</th>
+        </tr>
+      </thead>
+      <tbody id="tabelaDados"></tbody>
+    </table>
+  </div>
+
+  <script>
+    let dados = [];
+
+    async function carregarDados() {
+      const response = await fetch('dados_he.json');
+      dados = await response.json();
+      preencherFiltros();
+      filtrarTabela();
+    }
+
+    function preencherFiltros() {
+      const lotacoes = new Set();
+      const tipos = new Set();
+
+      dados.forEach(item => {
+        lotacoes.add(item.LOTAÇÃO);
+        tipos.add(item["TIPO DE HE"]);
+      });
+
+      lotacoes.forEach(l => {
+        document.getElementById('filtroLotacao').innerHTML += `<option value="${l}">${l}</option>`;
+      });
+
+      tipos.forEach(t => {
+        document.getElementById('filtroTipo').innerHTML += `<option value="${t}">${t}</option>`;
+      });
+    }
+
+    function filtrarTabela() {
+      const busca = document.getElementById('busca').value.toLowerCase();
+      const lotacao = document.getElementById('filtroLotacao').value;
+      const tipo = document.getElementById('filtroTipo').value;
+      const status = document.getElementById('filtroStatus').value;
+
+      const filtrado = dados.filter(item => {
+        return (
+          (!busca || item.FUNCIONÁRIO.toLowerCase().includes(busca) || item.MAT.toString().includes(busca)) &&
+          (!lotacao || item.LOTAÇÃO === lotacao) &&
+          (!tipo || item["TIPO DE HE"] === tipo) &&
+          (!status || item.STATUS === status)
+        );
+      });
+
+      const tabela = document.getElementById('tabelaDados');
+      tabela.innerHTML = '';
+
+      filtrado.forEach(item => {
+        tabela.innerHTML += `
+          <tr>
+            <td>${item.MAT}</td>
+            <td>${item.FUNCIONÁRIO}</td>
+            <td>${item.CARGO}</td>
+            <td>${item.FUNÇÃO}</td>
+            <td>${item.LOTAÇÃO}</td>
+            <td>${item["Nº TEMPOS/HORAS"]} ${item["TEMPOS/HORAS"]}</td>
+            <td>${item["TIPO DE HE"]}</td>
+            <td>${item["INÍCIO"]}</td>
+            <td>${item["TÉRMINO"]}</td>
+            <td>${item.STATUS}</td>
+            <td>${item.OBSERVAÇÃO || ''}</td>
+          </tr>
+        `;
+      });
+    }
+
+    document.getElementById('busca').addEventListener('input', filtrarTabela);
+    document.getElementById('filtroLotacao').addEventListener('change', filtrarTabela);
+    document.getElementById('filtroTipo').addEventListener('change', filtrarTabela);
+    document.getElementById('filtroStatus').addEventListener('change', filtrarTabela);
+
+    carregarDados();
+  </script>
+</body>
+</html>
